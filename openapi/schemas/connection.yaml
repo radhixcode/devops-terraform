@@ -1,0 +1,10 @@
+Connection:
+  type: object
+  required:
+    - id
+    - miles
+  properties:
+    id:
+      type: string
+    miles:
+      type: number

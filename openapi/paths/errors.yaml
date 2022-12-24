@@ -1,0 +1,30 @@
+"400":
+  description: Bad request
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/error.yaml#/Error"
+"401":
+  description: Unauthorized
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/error.yaml#/Error"
+"403":
+  description: Forbidden
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/error.yaml#/Error"
+"404":
+  description: Not Found
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/error.yaml#/Error"
+"409":
+  description: Conflict
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/error.yaml#/Error"

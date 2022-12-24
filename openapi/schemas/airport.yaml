@@ -1,0 +1,18 @@
+Airport:
+  type: object
+  required:
+    - id
+    - name
+  properties:
+    id:
+      type: string
+    name:
+      type: string
+    latitude:
+      type: string
+    longitude:
+      type: string
+    connections:
+      type: array
+      items:
+        $ref: './connection.yaml#/Connection'

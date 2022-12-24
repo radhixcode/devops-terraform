@@ -1,0 +1,16 @@
+openapi: 3.0.0
+info:
+  version: "1.0.0"
+  title: "Travel Agency API"
+  description: "This is the API documentation for the TKC Travel Agency Challenge API."
+  contact:
+    email: "tco@keyholding.com"
+servers:
+  - url: "https://travel.keyholding.com/challenge-api/"
+paths:
+  /airport:
+    $ref: paths/airports.yaml
+  /airport/{id}:
+    $ref: paths/airports.id.yaml
+  /airport/{id}/to/{toId}:
+    $ref: paths/airports.id.to.toId.yaml

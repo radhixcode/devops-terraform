@@ -1,0 +1,14 @@
+Journey:
+  type: object
+  required:
+    - journey
+    - miles
+  properties:
+    journey:
+      type: array
+      items:
+        type: string
+    miles:
+      type: array
+      items:
+        type: number

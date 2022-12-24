@@ -1,0 +1,27 @@
+get:
+  description: "Get a journey: an ordered list of airport IDs"
+  parameters:
+    - in: path
+      name: toId
+      required: true
+      schema:
+        type: string
+    - in: path
+      name: id
+      required: true
+      schema:
+        type: string
+  responses:
+    "400":
+      $ref: "paths/errors.yaml#/400"
+    "401":
+      $ref: "paths/errors.yaml#/401"
+    "403":
+      $ref: "paths/errors.yaml#/403"
+    "200":
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/journey.yaml#/Journey"
+

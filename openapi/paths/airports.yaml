@@ -1,0 +1,17 @@
+get:
+  description: List Airports
+  responses:
+    "400":
+      $ref: "paths/errors.yaml#/400"
+    "401":
+      $ref: "paths/errors.yaml#/401"
+    "403":
+      $ref: "paths/errors.yaml#/403"
+    "200":
+      description: Success
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../schemas/airport.yaml#/Airport"
