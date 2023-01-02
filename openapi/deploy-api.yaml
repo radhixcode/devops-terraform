@@ -1,0 +1,194 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Travel Agency API
+  description: This is the API documentation for the TKC Travel Agency Challenge API.
+  contact:
+    email: tco@keyholding.com
+servers:
+  - url: https://travel.keyholding.com/challenge-api/
+paths:
+  /airport:
+    get:
+      description: List Airports
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - id
+                    - name
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    latitude:
+                      type: string
+                    longitude:
+                      type: string
+                    connections:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - id
+                          - miles
+                        properties:
+                          id:
+                            type: string
+                          miles:
+                            type: number
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1airport/get/responses/400/content/application~1json/schema"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1airport/get/responses/400/content/application~1json/schema"
+      x-amazon-apigateway-integration:
+        credentials: ${iam_role_arn}
+        uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        type: aws_proxy
+  "/airport/{id}":
+    get:
+      description: Get a single Airport
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/paths/~1airport/get/responses/200/content/application~1json/schema/ite\
+                  ms"
+        "400":
+          $ref: "#/paths/~1airport/get/responses/400"
+        "401":
+          $ref: "#/paths/~1airport/get/responses/401"
+        "403":
+          $ref: "#/paths/~1airport/get/responses/403"
+      x-amazon-apigateway-integration:
+        credentials: ${iam_role_arn}
+        uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        type: aws_proxy
+  "/airport/{id}/to/{toId}":
+    get:
+      description: "Get a journey: an ordered list of airport IDs"
+      parameters:
+        - in: path
+          name: toId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - journey
+                  - miles
+                properties:
+                  journey:
+                    type: array
+                    items:
+                      type: string
+                  miles:
+                    type: array
+                    items:
+                      type: number
+        "400":
+          $ref: "#/paths/~1airport/get/responses/400"
+        "401":
+          $ref: "#/paths/~1airport/get/responses/401"
+        "403":
+          $ref: "#/paths/~1airport/get/responses/403"
+      x-amazon-apigateway-integration:
+        credentials: ${iam_role_arn}
+        uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        type: aws_proxy
+  "/vehicle/{people}/{distance}":
+    get:
+      description: Get vehicle with cheap cost
+      parameters:
+        - in: path
+          name: people
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: distance
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - vehicle
+                  - cost
+                properties:
+                  vehicle:
+                    type: string
+                  cost:
+                    type: number
+                  vehicle_count:
+                    type: number
+                  number_of_people:
+                    type: number
+                  distance:
+                    type: number
+        "400":
+          $ref: "#/paths/~1airport/get/responses/400"
+        "401":
+          $ref: "#/paths/~1airport/get/responses/401"
+        "403":
+          $ref: "#/paths/~1airport/get/responses/403"
+      x-amazon-apigateway-integration:
+        credentials: ${iam_role_arn}
+        uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        type: aws_proxy

@@ -1,5 +1,6 @@
 from endpoints.airport_endpoint import AirportEndpoint
 from endpoints.journey_endpoint import JourneyEndpoint
+from endpoints.vehicle_endpoint import VehicleEndpoint
 from exceptions.not_implemented_exception import NotImplementedException
 from exceptions.not_found_exception import NotFoundException
 from exceptions.bad_request_exception import BadRequestException
@@ -7,11 +8,13 @@ from helpers.response_helpers import *
 import traceback
 from http.server import *
 import logging
+import os
 
 MAPPINGS = {
     "/airport": AirportEndpoint,
     "/airport/{id}": AirportEndpoint,
-    "/airport/{id}/to/{toId}": JourneyEndpoint
+    "/airport/{id}/to/{toId}": JourneyEndpoint,
+    "/vehicle/{people}/{distance}": VehicleEndpoint
 }
 
 
@@ -57,29 +60,40 @@ def to_single_value_params(path):
 
 
 def path_to_path_info(path):
-    if "/bulk/" in path:
-        return {
+    pathInfo = {
         "resource": path,
         "params": {},
         "path": path
     }
+    if "/bulk/" in path:
+        return pathInfo
     splitPaths = path.split("?")[0].strip("/").split("/")
     resource = []
     params = {}
-    for i, path in enumerate(splitPaths):
-        if i % 2 != 0:
-            param_name = "id"
-            if i != 1:
-                param_name = resource[-1] + "Id"
-            resource.append("{" + param_name + "}")
-            params[param_name] = path
-        else:
-            resource.append(path)
-    return {
-        "resource": "/" + "/".join(resource),
-        "params": params,
-        "path": path
-    }
+    if splitPaths[0] == 'airport':
+        for i, path in enumerate(splitPaths): 
+            if i % 2 != 0:
+                param_name = "id"
+                if i != 1:
+                    param_name = resource[-1] + "Id"
+                resource.append("{" + param_name + "}")
+                params[param_name] = path
+            else:
+                resource.append(path)
+    if splitPaths[0] == 'vehicle':
+        for i, path in enumerate(splitPaths): 
+            if i== 0:
+                resource.append(path)
+            else: 
+                param_name = "people"
+                if i == 2:
+                    param_name = "distance"
+                resource.append("{" + param_name + "}")
+                params[param_name] = path
+    pathInfo['resource'] = "/" + "/".join(resource)
+    pathInfo['params'] = params
+    pathInfo['path'] = path
+    return pathInfo
 
 def to_api_gateway_request(path, method, body=None):
     path_info = path_to_path_info(path)
@@ -133,11 +147,12 @@ class HandlerClass(BaseHTTPRequestHandler):
     def do_DELETE(self):
         self.process_with_body("DELETE")
 
-
+PORT = 8080
 def run(server_class=HTTPServer, handler_class=HandlerClass):
-    server_address = ('', 8080)
+    server_address = ('', PORT)
     httpd = server_class(server_address, handler_class)
-    print("Listening on http://localhost:8080/")
+    print("Listening on http://localhost:" + str(PORT) + "/")
     httpd.serve_forever()
 
-run()
+if os.getenv('LOCAL_SERVER'):
+    run()

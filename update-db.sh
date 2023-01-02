@@ -1,17 +1,12 @@
 #!/bin/bash
 
-# docker run -p 8000:8000 amazon/dynamodb-local
-
-export AWS_PROFILE=default
-
 function put_airport() {
     connections=$(echo "$5" | jq -c '.[] | {"M": {"id":{"S": .id}, "miles":{"N": .miles|tostring}} }' | tr '\n', ',' | rev | cut -c2- | rev )
     json="{\"id\": {\"S\": \"$1\"}, \"name\": {\"S\": \"$2\"}, \"latitude\": {\"S\": \"$3\"}, \"longitude\": {\"S\": \"$4\"}, \"connections\": {\"L\": [$connections]}}"
     echo "${json}"
     aws dynamodb put-item \
         --table-name airport  \
-        --item "$json" \
-        --endpoint-url http://localhost:8000
+        --item "$json" 
 }
 
 function put_vehicle() {
@@ -19,23 +14,8 @@ function put_vehicle() {
     echo "${json}"
     aws dynamodb put-item \
         --table-name vehicle  \
-        --item "$json" \
-        --endpoint-url http://localhost:8000
+        --item "$json" 
 }
-
-aws dynamodb delete-table \
-    --table-name airport \
-    --endpoint-url http://localhost:8000
-
-aws dynamodb create-table \
-    --table-name airport \
-    --attribute-definitions \
-        AttributeName=id,AttributeType=S \
-    --key-schema \
-        AttributeName=id,KeyType=HASH \
-    --provisioned-throughput \
-        ReadCapacityUnits=10,WriteCapacityUnits=5 \
-    --endpoint-url http://localhost:8000
 
 put_airport "IST" "Istanbul Airport" "41.262222" "28.727778" '[{"id":"ATH", "miles": 100}, {"id":"AMS", "miles": 1200}, {"id":"SVO", "miles": 800}, {"id":"VIE", "miles": 750}]'
 put_airport "CDG" "Charles de Gaulle Airport" "49.009722" "2.547778" '[{"id":"ORY", "miles": 10}, {"id":"LHR", "miles": 100}, {"id":"AMS", "miles": 120}, {"id":"FRA", "miles": 130}, {"id":"ZRH", "miles": 120}, {"id":"FCO", "miles": 500}, {"id":"LIS", "miles": 750}, {"id":"MAD", "miles": 600}]'
@@ -58,20 +38,6 @@ put_airport "ZRH" "Zurich Airport" "47.464722" "8.549167" '[{"id":"FCO", "miles"
 put_airport "ATH" "Athens International Airport" "37.936389" "23.947222" '[{"id":"IST", "miles": 150}, {"id":"FCO", "miles": 200}, {"id":"MAD", "miles": 500}]'
 put_airport "VIE" "Vienna International Airport" "48.110833" "16.570833" '[{"id":"IST", "miles": 350}, {"id":"VKO", "miles": 890}, {"id":"OSL", "miles": 880}, {"id":"MUC", "miles": 95}, {"id":"FCO", "miles": 200}]'
 
-
-aws dynamodb delete-table \
-    --table-name vehicle \
-    --endpoint-url http://localhost:8000
-
-aws dynamodb create-table \
-    --table-name vehicle \
-    --attribute-definitions \
-        AttributeName=id,AttributeType=S \
-    --key-schema \
-        AttributeName=id,KeyType=HASH \
-    --provisioned-throughput \
-        ReadCapacityUnits=10,WriteCapacityUnits=5 \
-    --endpoint-url http://localhost:8000
 
 put_vehicle "1" "taxi" ".4" "4" "0"
 put_vehicle "2" "car" ".2" "4" "3"

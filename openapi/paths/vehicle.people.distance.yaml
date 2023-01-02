@@ -1,8 +1,13 @@
 get:
-  description: Get a single Airport
+  description: "Get vehicle with cheap cost"
   parameters:
     - in: path
-      name: id
+      name: people
+      required: true
+      schema:
+        type: string
+    - in: path
+      name: distance
       required: true
       schema:
         type: string
@@ -18,11 +23,10 @@ get:
       content:
         application/json:
           schema:
-            $ref: "../schemas/airport.yaml#/Airport"
+            $ref: "../schemas/vehicle.yaml#/Vehicle"
   x-amazon-apigateway-integration:
     credentials: ${iam_role_arn}
-    uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations
-    passthroughBehavior: when_no_match
-    httpMethod: GET
-    type: aws_proxy
-
+    uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations"
+    passthroughBehavior: "when_no_match"
+    httpMethod: "GET"
+    type: "aws_proxy"

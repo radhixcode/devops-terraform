@@ -1,0 +1,16 @@
+Vehicle:
+  type: object
+  required:
+    - vehicle
+    - cost
+  properties:
+    vehicle:
+      type: string
+    cost:
+      type: number
+    vehicle_count:
+      type: number
+    number_of_people:
+      type: number
+    distance:
+      type: number

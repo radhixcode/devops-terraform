@@ -14,3 +14,5 @@ paths:
     $ref: paths/airports.id.yaml
   /airport/{id}/to/{toId}:
     $ref: paths/airports.id.to.toId.yaml
+  /vehicle/{people}/{distance}:
+    $ref: paths/vehicle.people.distance.yaml
