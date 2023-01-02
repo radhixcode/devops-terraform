@@ -1,4 +1,37 @@
 # -----------------------------------------------------------------------
+# Zipping lambda and dependency packages
+# -----------------------------------------------------------------------
+resource "null_resource" "lambda-copy" {
+  provisioner "local-exec" {
+    command = "cp -r ../lambda ."
+  }
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+}
+
+resource "null_resource" "py-deps" {
+  provisioner "local-exec" {
+    command = "pip3 install --target ./lambda botocore boto3 dijkstar"
+  }
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+  depends_on = [
+    null_resource.lambda-copy
+  ]
+}
+
+data "archive_file" "lambda-zip" {
+  type        = "zip"
+  output_path = "lambda.zip"
+  source_dir  = "./lambda"
+  depends_on = [
+    null_resource.py-deps
+  ]
+}
+
+# -----------------------------------------------------------------------
 # Provides an IAM role for Lambda
 # -----------------------------------------------------------------------
 resource "aws_iam_role" "iam-for-lambda" {
@@ -91,9 +124,7 @@ resource "aws_iam_policy_attachment" "apigw-lambda-attach" {
 resource "aws_dynamodb_table" "airport_dynamodb_table" {
   name         = "airport"
   billing_mode = "PAY_PER_REQUEST"
-  #   read_capacity  = 20
-  #   write_capacity = 20
-  hash_key = "id"
+  hash_key     = "id"
 
   attribute {
     name = "id"
@@ -109,9 +140,7 @@ resource "aws_dynamodb_table" "airport_dynamodb_table" {
 resource "aws_dynamodb_table" "vehicle_dynamodb_table" {
   name         = "vehicle"
   billing_mode = "PAY_PER_REQUEST"
-  #   read_capacity  = 20
-  #   write_capacity = 20
-  hash_key = "id"
+  hash_key     = "id"
 
   attribute {
     name = "id"
@@ -133,6 +162,9 @@ resource "aws_lambda_function" "lambda" {
   role          = aws_iam_role.iam-for-lambda.arn
   handler       = "handler_as_app.lambda_handler"
   runtime       = "python3.7"
+  depends_on = [
+    data.archive_file.lambda-zip
+  ]
 }
 
 resource "aws_lambda_function_url" "lambda" {
@@ -157,6 +189,12 @@ resource "aws_api_gateway_rest_api" "holiday-api" {
   name        = "holiday-api"
   description = "Proxy to handle requests to our API"
   body        = data.template_file.open-api-specification.rendered
+  depends_on = [
+    aws_lambda_function.lambda
+  ]
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
 }
 
 # Manages an API Gateway Deployment (snapshot of the REST API configuration)
@@ -198,47 +236,6 @@ resource "aws_api_gateway_authorizer" "holiday-lambda-auth" {
   authorizer_uri         = aws_lambda_function.lambda.invoke_arn
   authorizer_credentials = aws_iam_role.iam-for-lambda.arn
 }
-
-# data "aws_arn" "api_gw_deployment_arn" {
-#   arn = aws_api_gateway_deployment.holiday-deploy.execution_arn
-# }
-
-# resource "aws_api_gateway_resource" "resource" {
-#   path_part   = "resource"
-#   parent_id   = aws_api_gateway_rest_api.holiday-api.root_resource_id
-#   rest_api_id = aws_api_gateway_rest_api.holiday-api.id
-# }
-
-# resource "aws_api_gateway_method" "method" {
-#   rest_api_id   = aws_api_gateway_rest_api.holiday-api.id
-#   resource_id   = aws_api_gateway_resource.resource.id
-#   http_method   = "GET"
-#   authorization = "CUSTOM"
-# }
-
-# resource "aws_lambda_permission" "vehicle_get_trigger" {
-#   statement_id = "AllowAPIGatewayInvokeGETVehicle"
-#   action       = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/vehicle/*/*"
-# }
-
-# resource "aws_lambda_permission" "airport_get_trigger" {
-#   statement_id = "AllowAPIGatewayInvokeGETAirport"
-#   action       = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/airport"
-# }
-
-# resource "aws_lambda_permission" "to_airport_get_trigger" {
-#   statement_id = "AllowAPIGatewayInvokeGETToAirport"
-#   action       = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/airport/*/to/*"
-# }
 
 # -----------------------------------------------------------------------
 # Output URLs

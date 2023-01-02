@@ -13,8 +13,6 @@ test-report.html
 
 # production
 /build
-terraform/lambda.zip
-/package
 
 # misc
 .DS_Store
@@ -34,3 +32,6 @@ Javascript/test-report.html
 .terraform
 terraform.tfstate*
 .terraform.tfstate*
+terraform/package
+terraform/lambda
+terraform/lambda.zip
