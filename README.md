@@ -32,10 +32,10 @@ aws dynamodb describe-table --table-name airport --endpoint-url http://localhost
     * [http://localhost:8080/vehicle/2/100](http://localhost:8080/vehicle/2/100)
 
 ### Terraform with AWS
-* Install Speccy for combining OpenAPI specifications (Inside project folder)
+* Install Speccy for combining OpenAPI specifications (Inside `openapi` folder)
 ```
-npm install speccy -g
-speccy resolve openapi/main.yaml -o openapi/deploy-api.yaml
+npm install openapi-merger -g 
+openapi-merger -i main.yaml -o deploy-api.yaml
 ```
 * Install Terraform with brew
 ```
