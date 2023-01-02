@@ -1,8 +1,93 @@
 <div align="center"><img src="./logo.svg" alt="Logo" width="80" height="80"></div>
 
-<h1 align="center">Technical Challenge - Holiday Agency</h1>
+<h1 align="center">Holiday Agency</h1>
 
-# Brief
+# Setup
+### Run on local machine
+* Install pip3 and install needed dependency packages 
+```
+pip3 install botocore boto3 dijkstar
+```
+* Install docker and run docker command to install dynamoDB locally
+```
+docker run -p 8000:8000 amazon/dynamodb-local  
+```
+* Run bash script `create-local-db.sh` to create the dynamo DB tables `airport` and `vehicle` and populate them
+```
+./create-local-db.sh
+```
+* Check dynamo DB table eg. `airport`
+```
+aws dynamodb list-tables --endpoint-url http://localhost:8000
+aws dynamodb describe-table --table-name airport --endpoint-url http://localhost:8000
+```
+* Inside lambda folder run bash script `run.sh` to run the lambda
+```
+./run.sh
+```
+* Example endpoints
+    * [http://localhost:8080/airport](http://localhost:8080/airport)
+    * [http://localhost:8080/airport/AMS](http://localhost:8080/airport/AMS)
+    * [http://localhost:8080/airport/AMS/to/LIS](http://localhost:8080/airport/AMS/to/LIS)
+    * [http://localhost:8080/vehicle/2/100](http://localhost:8080/vehicle/2/100)
+
+### Terraform with AWS
+*  Zip Lamda file
+    * Inside project folder install dependency packages, will create package folder.
+    * Zip lambda files as lamda.zip and move to terraform folder
+    * Go to package folder and zip lambda files and  package files together
+```
+pip3 install --target ./package botocore boto3 dijkstar
+zip -r ../terraform/lambda.zip .
+```
+* Install Speccy for combining OpenAPI specifications (Inside project folder)
+```
+npm install speccy -g
+speccy resolve openapi/main.yaml -o openapi/deploy-api.yaml
+```
+* Install Terraform with brew
+```
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+```
+* Terraform commands
+```
+terraform init (initializes the current directory)
+terraform init -upgrade (upgrade to latest acceptable provider version)
+terraform validate (command validates the configuration files in a directory)
+terraform fmt (format your configuration files into a canonical format and style)
+terraform plan (dry run to see what Terraform will do)
+terraform refresh (refreshes the state file)
+terraform output (views Terraform outputs)
+terraform apply (applies the Terraform code and builds stuff)
+terraform graph (creates a DOT-formatted graph)
+terraform destroy --target aws_lambda_function.lambda (destroys indivifual resource)
+terraform destroy  (destroys what has been built by Terraform)
+```
+### Notes
+* Populate AWS DynamoDB
+```
+./update-db.sh
+```
+* AWS lambda sample test JSON
+```
+{
+  "resource": "/vehicle/{people}/{distance}",
+  "path": "/vehicle/2/100",
+  "httpMethod": "GET",
+  "queryStringParameters": {},
+  "multiValueQueryStringParameters": {},
+  "pathParameters": {
+    "people": "2",
+    "distance": "100"
+  },
+  "stageVariables": "None",
+  "body": "None",
+  "isBase64Encoded": "FALSE"
+}
+```
+
+# Overview
 A holiday agency would like to suggest the lowest travel cost for holiday journeys to their customers.  
 A return journey consists of the following parts:
 
@@ -41,51 +126,3 @@ This flight agency keeps a table with its airports and their connections:
 While the route `A->B` can exist, it doesn't necessarily mean that `B->A` exists. Additionally, the mileage may be different for each direction.
 
 As a side-note, some of the mileages might not be at all accurate but imagine that someone make some fairly large one-way portals in the sky that can shorten the distance between two airports.
-
-## Airport Data
-The company wants to make use of DynamoDB to hold its airport data.
-
-You can make use of [`create-local-db.sh`](./create-local-db.sh) which sets up a local DynamoDB with the data in the table above (and can be changed to populate a remote DynamoDB too).
-
-
-## Your task:
-This application has been developed by a team using Python with the intent of using API Gateway and Lambda to provide a RESTful API to the agency's data.
-
-The current logic allows for the following endpoints:
-* `GET`: `/airports` - returns a list of airports
-* `GET`: `/airports/{airportId}` - return details of a single airport
-* `GET`: `/airports/{airportId}/to/{airportToId}` - returns the cheapest quote for a journey from `airportId` to `airportToId`
-
-These endpoints are defined using openapi specification in [`openapi/`](./openapi/).
-
-If you'd like to use them to feed your API Gateway code, make sure to combine them into one file (maybe using [speccy](https://github.com/wework/speccy) or [swagger-codegen](https://github.com/swagger-api/swagger-codegen)). You'll likely want to use `x-amazon-apigateway-integration` to define the integration with Lambda too.
-
-However, the team was disbanded and the agency requires one last endpoint to be added:
-* `GET`: `/vehicle/{numberOfPeople}/{distance}` - returns the cheapest vehicle to use (and the cost) for the given `numberOfPeople` and `distance` in miles
-    * Look at [`airport_endpoint.py`](./lambda/endpoints/airport_endpoint.py) or [`journey_endpoint.py`](./lambda/endpoints/journey_endpoint.py) for examples on how to create the vehicle endpoint.
-    * See [`airports.id.yaml`](./openapi/paths/airports.id.yaml) to see how to add the endpoint to the openapi specification.
-
-The agency has asked you to add this endpoint and then create the infrastructure to deploy the whole application.
-
-Each lambda is expected to use an entrypoint that is derived from the [`handler.template.py`](./lambda/handler.template.py).
-
-This file would need it's `{{PLACEHOLDERS}}` replaced with the proper items. For example:
-* `{{RESOURCE_FILE}}` is used to refer to the right endpoint file (i.e. `{{RESOURCE_FILE}}_endpoint`)
-* `{{RESOURCE}}` is used to refer to the right endpoint class (i.e. `{{RESOURCE}}Endpoint`)
-
-Additionally, the development team has added a way to run the application locally using [`handler_as_app.py`](./lambda/handler_as_app.py) and a helper [`run.sh`](./lambda/run.sh) script
-
-### Expectations
-* A git repository with the solution
-    * Application code (you can fork this repository to get your started)
-    * Infrastructure code (Terraform) for setting up API Gateway, Lambda and DynamoDB (and any additional resources you deem necessary)
-    * Any CI/CD configuration - e.g. github actions
-    * Any supporting scripts to generate, package, run, etc...
-* Ideally, if you can, host this solution on AWS and provide a link to the API Gateway endpoints
-
-Feel free to make any changes necessary to the application code to make it work with your infrastructure.
-
-# Getting help
-If you have any questions, please feel free to reach out to me via email (tco@keyholding.com).
-
-**This is a genuine offer for help** - I want to see you succeed! - and it lets me understand how you work and communicate.
