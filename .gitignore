@@ -26,3 +26,12 @@ yarn-debug.log*
 yarn-error.log*
 test-report.html
 Javascript/test-report.html
+
+# terraform
+.terraform.lock*
+.terraform
+terraform.tfstate*
+.terraform.tfstate*
+terraform/package
+terraform/lambda
+terraform/lambda.zip
