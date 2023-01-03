@@ -92,16 +92,3 @@ jobs:
      - name: Terraform Apply
        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
        run: terraform apply -auto-approve -input=false
-  apply:
-  if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'terraform apply') }}
-  runs-on: ubuntu-latest
-  name: Apply terraform plan
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        ref: refs/pull/${{ github.event.issue.number }}/merge
-    - name: terraform apply
-      uses: dflook/terraform-apply@v1
-      with:
-        path: my-terraform-config
