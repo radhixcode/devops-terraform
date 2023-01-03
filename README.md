@@ -16,7 +16,7 @@ docker run -p 8000:8000 amazon/dynamodb-local
 ```
 ./create-local-db.sh
 ```
-* Check dynamo DB table eg. `airport`
+* Check dynamo DB tables
 ```
 aws dynamodb list-tables --endpoint-url http://localhost:8000
 aws dynamodb describe-table --table-name airport --endpoint-url http://localhost:8000
@@ -32,18 +32,10 @@ aws dynamodb describe-table --table-name airport --endpoint-url http://localhost
     * [http://localhost:8080/vehicle/2/100](http://localhost:8080/vehicle/2/100)
 
 ### Terraform with AWS
-*  Zip Lamda file
-    * Inside project folder install dependency packages, will create package folder.
-    * Zip lambda files as lamda.zip and move to terraform folder
-    * Go to package folder and zip lambda files and  package files together
+* Install Speccy for combining OpenAPI specifications (Inside `openapi` folder)
 ```
-pip3 install --target ./package botocore boto3 dijkstar
-zip -r ../terraform/lambda.zip .
-```
-* Install Speccy for combining OpenAPI specifications (Inside project folder)
-```
-npm install speccy -g
-speccy resolve openapi/main.yaml -o openapi/deploy-api.yaml
+npm install openapi-merger -g 
+openapi-merger -i main.yaml -o deploy-api.yaml
 ```
 * Install Terraform with brew
 ```

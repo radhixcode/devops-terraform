@@ -1,0 +1,256 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Travel Agency API
+  description: This is the API documentation for the TKC Travel Agency Challenge API.
+  contact:
+    email: tco@keyholding.com
+servers:
+  - url: 'https://travel.keyholding.com/challenge-api/'
+paths:
+  /airport:
+    get:
+      description: List Airports
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Airport'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+      x-amazon-apigateway-integration:
+        credentials: '${iam_role_arn}'
+        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        type: aws_proxy
+  '/airport/{id}':
+    get:
+      description: Get a single Airport
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Airport'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+      x-amazon-apigateway-integration:
+        credentials: '${iam_role_arn}'
+        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        type: aws_proxy
+  '/airport/{id}/to/{toId}':
+    get:
+      description: 'Get a journey: an ordered list of airport IDs'
+      parameters:
+        - in: path
+          name: toId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journey'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+      x-amazon-apigateway-integration:
+        credentials: '${iam_role_arn}'
+        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        type: aws_proxy
+  '/vehicle/{people}/{distance}':
+    get:
+      description: Get vehicle with cheap cost
+      parameters:
+        - in: path
+          name: people
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: distance
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+      x-amazon-apigateway-integration:
+        credentials: '${iam_role_arn}'
+        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        type: aws_proxy
+    options:
+      responses:
+        '200':
+          $ref: '#/components/responses/cors'
+        '400':
+          $ref: '#/components/responses/cors'
+        '500':
+          $ref: '#/components/responses/cors'
+      x-amazon-apigateway-integration:
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Max-Age: '''7200'''
+              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,HEAD,GET,POST,PUT,PATCH,DELETE'''
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+              method.response.header.Access-Control-Allow-Origin: '''*'''
+        passthroughBehavior: when_no_match
+        timeoutInMillis: 29000
+        requestTemplates:
+          application/json: '{ "statusCode": 200 }'
+        type: mock
+components:
+  responses:
+    '400':
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    cors:
+      description: 200 response
+      headers:
+        Access-Control-Allow-Origin:
+          schema:
+            type: string
+        Access-Control-Allow-Methods:
+          schema:
+            type: string
+        Access-Control-Max-Age:
+          schema:
+            type: string
+        Access-Control-Allow-Headers:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Empty'
+  schemas:
+    Airport:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        latitude:
+          type: string
+        longitude:
+          type: string
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Connection'
+    Connection:
+      type: object
+      required:
+        - id
+        - miles
+      properties:
+        id:
+          type: string
+        miles:
+          type: number
+    Empty:
+      title: Empty Schema
+      type: object
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+    Journey:
+      type: object
+      required:
+        - journey
+        - miles
+      properties:
+        journey:
+          type: array
+          items:
+            type: string
+        miles:
+          type: array
+          items:
+            type: number
+    Vehicle:
+      type: object
+      required:
+        - vehicle
+        - cost
+      properties:
+        vehicle:
+          type: string
+        cost:
+          type: number
+        vehicle_count:
+          type: number
+        number_of_people:
+          type: number
+        distance:
+          type: number

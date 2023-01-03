@@ -8,15 +8,21 @@ get:
         type: string
   responses:
     "400":
-      $ref: "paths/errors.yaml#/400"
+      $ref: "errors.yaml#/400"
     "401":
-      $ref: "paths/errors.yaml#/401"
+      $ref: "errors.yaml#/401"
     "403":
-      $ref: "paths/errors.yaml#/403"
+      $ref: "errors.yaml#/403"
     "200":
       description: Success
       content:
         application/json:
           schema:
             $ref: "../schemas/airport.yaml#/Airport"
+  x-amazon-apigateway-integration:
+    credentials: ${iam_role_arn}
+    uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations
+    passthroughBehavior: when_no_match
+    httpMethod: GET
+    type: aws_proxy
 

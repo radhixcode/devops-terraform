@@ -8,5 +8,5 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
 cd "${DIR}"
-
-DYNAMODB_ENDPOINT="http://localhost:8000" python handler_as_app.py
+export LOCAL_SERVER=true
+DYNAMODB_ENDPOINT="http://localhost:8000" python3 handler_as_app.py
