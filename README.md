@@ -79,6 +79,14 @@ terraform destroy  (destroys what has been built by Terraform)
 }
 ```
 
+### Reference
+* Github actions
+    * [Managing Terraform with GitHub Actions](https://spacelift.io/blog/github-actions-terraform)
+    * [How to use GitHub Actions to automate Terraform](https://acloudguru.com/blog/engineering/how-to-use-github-actions-to-automate-terraform)
+* Terraform
+    * [Openapi tf example](https://github.com/rpstreef/openapi-tf-example/blob/master/services/api/example.yml)
+    * [aws api-gateway sample](https://github.com/aws-samples/api-gateway-secure-pet-store/blob/master/src/main/resources/swagger.yaml)
+
 # Overview
 A holiday agency would like to suggest the lowest travel cost for holiday journeys to their customers.  
 A return journey consists of the following parts:
