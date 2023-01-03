@@ -87,7 +87,7 @@ terraform destroy  (destroys what has been built by Terraform)
 ### Current Shortcomings
 * **Github actions:** Can do terraform apply locally for the AWS but github action terrafom apply didn't trigger on merge/push to the main branch.
 * **Public URL:** Unable to create a public url for the appication. (Returning with 500 Internal server error)
-* **API gateway, Lambda:** In the AWS Lamda function working (tested with above sample JSON). But to test test API gateway Method execution,  Integration Request needed to manually update function name for each GET.
+* **API gateway, Lambda:** In the AWS Lamda function working (tested with above sample JSON). But to test API gateway Method execution, Integration Request function name needed to be manually updated for each GET.
 
  ![Img 1](https://i.imgur.com/CxsMIZw.png)
  ![Img 2](https://i.imgur.com/oArVAxI.png)
