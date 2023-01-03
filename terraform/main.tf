@@ -276,6 +276,37 @@ resource "aws_api_gateway_authorizer" "holiday-lambda-auth" {
 }
 
 # -----------------------------------------------------------------------
+# Lambda permission API gateway 
+# -----------------------------------------------------------------------
+data "aws_arn" "api_gw_deployment_arn" {
+  arn = aws_api_gateway_deployment.holiday-deploy.execution_arn
+}
+
+resource "aws_lambda_permission" "vehicle_get_trigger" {
+  statement_id  = "AllowAPIGatewayInvokeGETVehicle"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/vehicle/*/*"
+}
+
+resource "aws_lambda_permission" "airport_get_trigger" {
+  statement_id  = "AllowAPIGatewayInvokeGETAirport"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/airport"
+}
+
+resource "aws_lambda_permission" "to_airport_get_trigger" {
+  statement_id  = "AllowAPIGatewayInvokeGETToAirport"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/airport/*/to/*"
+}
+
+# -----------------------------------------------------------------------
 # Output URLs
 # -----------------------------------------------------------------------
 output "base_url" {
@@ -285,30 +316,3 @@ output "base_url" {
 output "lamda_function_url" {
   value = aws_lambda_function_url.lambda.function_url
 }
-
-
-
-
-# resource "aws_lambda_permission" "vehicle_get_trigger" {
-#   statement_id = "AllowAPIGatewayInvokeGETVehicle"
-#   action       = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/vehicle/*/*"
-# }
-
-# resource "aws_lambda_permission" "airport_get_trigger" {
-#   statement_id = "AllowAPIGatewayInvokeGETAirport"
-#   action       = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/airport"
-# }
-
-# resource "aws_lambda_permission" "to_airport_get_trigger" {
-#   statement_id = "AllowAPIGatewayInvokeGETToAirport"
-#   action       = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/airport/*/to/*"
-# }
