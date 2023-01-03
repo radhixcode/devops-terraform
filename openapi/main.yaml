@@ -7,6 +7,12 @@ info:
     email: "tco@keyholding.com"
 servers:
   - url: "https://travel.keyholding.com/challenge-api/"
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      name: x-api-key
+      in: header
 paths:
   /airport:
     $ref: paths/airports.yaml

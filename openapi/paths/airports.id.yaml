@@ -1,5 +1,7 @@
 get:
   description: Get a single Airport
+  security:
+    - ApiKeyAuth: []
   parameters:
     - in: path
       name: id
@@ -20,9 +22,34 @@ get:
           schema:
             $ref: "../schemas/airport.yaml#/Airport"
   x-amazon-apigateway-integration:
-    credentials: ${iam_role_arn}
-    uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations
-    passthroughBehavior: when_no_match
-    httpMethod: GET
-    type: aws_proxy
-
+    uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations"
+    passthroughBehavior: "when_no_match"
+    httpMethod: "GET"
+    timeoutInMillis: ${lambda_identity_timeout}
+    type: "aws_proxy"
+    contentHandling: "CONVERT_TO_TEXT"
+  x-amazon-apigateway-auth:
+    type: "NONE"
+  x-amazon-apigateway-api-key-source: "HEADER"
+options:
+  responses:
+    200:
+      $ref: '../schemas/cors.yaml'
+    400:
+      $ref: '../schemas/cors.yaml'
+    500:
+      $ref: '../schemas/cors.yaml'
+  x-amazon-apigateway-integration:
+    responses:
+      default:
+        statusCode: "200"
+        responseParameters:
+          method.response.header.Access-Control-Max-Age: "'7200'"
+          method.response.header.Access-Control-Allow-Methods: "'OPTIONS,HEAD,GET,POST,PUT,PATCH,DELETE'"
+          method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          method.response.header.Access-Control-Allow-Origin: "'*'"
+    passthroughBehavior: "when_no_match"
+    timeoutInMillis: 29000
+    requestTemplates:
+      application/json: "{ \"statusCode\": 200 }"
+    type: "mock"
