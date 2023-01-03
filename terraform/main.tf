@@ -1,6 +1,15 @@
 # -----------------------------------------------------------------------
 # Zipping lambda and dependency packages
 # -----------------------------------------------------------------------
+resource "null_resource" "test-hello" {
+  provisioner "local-exec" {
+    command = "echo hello world"
+  }
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+}
+
 resource "null_resource" "lambda-copy" {
   provisioner "local-exec" {
     command = "cp -r ../lambda ."
