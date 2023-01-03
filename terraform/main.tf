@@ -102,6 +102,28 @@ resource "aws_iam_policy" "apigw-lambda-policy" {
     ]
   })
 }
+resource "aws_iam_role_policy" "apigw-cloudwatch-policy" {
+  name = "apigw-cloudwatch-policy"
+  role = aws_iam_role.iam-for-lambda.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams",
+          "logs:PutLogEvents",
+          "logs:GetLogEvents",
+          "logs:FilterLogEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
 
 # -----------------------------------------------------------------------
 # Attaches a IAM policy for DynamoDB-Lambda and ApiGateway-Lambda
@@ -116,6 +138,20 @@ resource "aws_iam_policy_attachment" "apigw-lambda-attach" {
   name       = "apigw-lambda-attachment"
   roles      = [aws_iam_role.iam-for-lambda.name]
   policy_arn = aws_iam_policy.apigw-lambda-policy.arn
+}
+
+
+# -----------------------------------------------------------------------
+# Cloudwatch resourses
+# -----------------------------------------------------------------------
+
+resource "aws_api_gateway_account" "api_gateway_account" {
+  cloudwatch_role_arn = aws_iam_role.iam-for-lambda.arn
+}
+
+resource "aws_cloudwatch_log_group" "api-gw-logs" {
+  name              = "api-gw-logs_${aws_api_gateway_rest_api.holiday-api.id}/holiday-stage"
+  retention_in_days = 3
 }
 
 # -----------------------------------------------------------------------
@@ -224,9 +260,11 @@ resource "aws_api_gateway_method_settings" "all" {
   method_path = "*/*"
 
   settings {
+    metrics_enabled        = var.api_metrics_enabled
+    data_trace_enabled     = var.data_trace_enabled
+    logging_level          = var.logging_level
     throttling_burst_limit = var.api_throttling_burst_limit
     throttling_rate_limit  = var.api_throttling_rate_limit
-    metrics_enabled        = var.api_metrics_enabled
   }
 }
 
@@ -247,3 +285,30 @@ output "base_url" {
 output "lamda_function_url" {
   value = aws_lambda_function_url.lambda.function_url
 }
+
+
+
+
+# resource "aws_lambda_permission" "vehicle_get_trigger" {
+#   statement_id = "AllowAPIGatewayInvokeGETVehicle"
+#   action       = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.lambda.function_name
+#   principal     = "apigateway.amazonaws.com"
+#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/vehicle/*/*"
+# }
+
+# resource "aws_lambda_permission" "airport_get_trigger" {
+#   statement_id = "AllowAPIGatewayInvokeGETAirport"
+#   action       = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.lambda.function_name
+#   principal     = "apigateway.amazonaws.com"
+#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/airport"
+# }
+
+# resource "aws_lambda_permission" "to_airport_get_trigger" {
+#   statement_id = "AllowAPIGatewayInvokeGETToAirport"
+#   action       = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.lambda.function_name
+#   principal     = "apigateway.amazonaws.com"
+#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/airport/*/to/*"
+# }

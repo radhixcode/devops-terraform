@@ -8,7 +8,10 @@ def respond(http_code, body):
     return {
         'statusCode': http_code,
         'body': json.dumps(body),
-        'headers': {"Access-Control-Allow-Origin": "*"},
+        'headers': {
+            "Access-Control-Allow-Headers" : "Content-Type",
+            "Access-Control-Allow-Methods": "OPTIONS,GET",
+            "Access-Control-Allow-Origin": "*"},
         "isBase64Encoded": False
     }
 

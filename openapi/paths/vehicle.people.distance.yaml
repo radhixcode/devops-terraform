@@ -30,3 +30,25 @@ get:
     passthroughBehavior: "when_no_match"
     httpMethod: "GET"
     type: "aws_proxy"
+options:
+  responses:
+    200:
+      $ref: '../schemas/cors.yaml'
+    400:
+      $ref: '../schemas/cors.yaml'
+    500:
+      $ref: '../schemas/cors.yaml'
+  x-amazon-apigateway-integration:
+    responses:
+      default:
+        statusCode: "200"
+        responseParameters:
+          method.response.header.Access-Control-Max-Age: "'7200'"
+          method.response.header.Access-Control-Allow-Methods: "'GET'"
+          method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          method.response.header.Access-Control-Allow-Origin: "'*'"
+    passthroughBehavior: "when_no_match"
+    timeoutInMillis: 29000
+    requestTemplates:
+      application/json: "{ \"statusCode\": 200 }"
+    type: "mock"
