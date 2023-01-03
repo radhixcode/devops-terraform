@@ -8,7 +8,7 @@
 ```
 pip3 install botocore boto3 dijkstar
 ```
-* Install docker and run docker command to install dynamoDB locally
+* Install docker and run docker command to install dynamoDB locally then run the container before running the bash script.
 ```
 docker run -p 8000:8000 amazon/dynamodb-local  
 ```
@@ -32,7 +32,7 @@ aws dynamodb describe-table --table-name airport --endpoint-url http://localhost
     * [http://localhost:8080/vehicle/2/100](http://localhost:8080/vehicle/2/100)
 
 ### Terraform with AWS
-* Install Speccy for combining OpenAPI specifications (Inside `openapi` folder)
+* Install openapi-merger for combining OpenAPI specifications (Inside `openapi` folder)
 ```
 npm install openapi-merger -g 
 openapi-merger -i main.yaml -o deploy-api.yaml
@@ -42,7 +42,7 @@ openapi-merger -i main.yaml -o deploy-api.yaml
 brew tap hashicorp/tap
 brew install hashicorp/tap/terraform
 ```
-* Terraform commands
+* Terraform commands. Run inside `terraform` folder
 ```
 terraform init (initializes the current directory)
 terraform init -upgrade (upgrade to latest acceptable provider version)
@@ -56,8 +56,7 @@ terraform graph (creates a DOT-formatted graph)
 terraform destroy --target aws_lambda_function.lambda (destroys indivifual resource)
 terraform destroy  (destroys what has been built by Terraform)
 ```
-### Notes
-* Populate AWS DynamoDB
+* Populate AWS DynamoDB after `terraform apply`
 ```
 ./update-db.sh
 ```
@@ -79,6 +78,19 @@ terraform destroy  (destroys what has been built by Terraform)
 }
 ```
 
+### Github actions
+* .github/workflow/terraform.yaml is the workflow file
+* Create new IAM user for github actions and get the credentials.
+* Add new New repository secrets  (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `BUCKET_TF_STATE`)
+ in Actions secrets of the Githud repository.
+
+### Current Shortcomings
+* Github actions: Can do terraform apply locally for the AWS but github action terrafom apply didn't trigger on merge/push to the main branch.
+* API gateway, Lambda: In the AWS Lamda function working (tested with above sample JSON). But to test test API gateway Method execution,  Integration Request needed to manually update function name for each GET.
+ ![Img 1](https://i.imgur.com/CxsMIZw.png)
+ ![Img 2](https://i.imgur.com/oArVAxI.png)
+* Unable to create a public url for the appication. (Returning with 500 Internal server error)
+
 ### Reference
 * Github actions
     * [Managing Terraform with GitHub Actions](https://spacelift.io/blog/github-actions-terraform)
@@ -86,6 +98,8 @@ terraform destroy  (destroys what has been built by Terraform)
 * Terraform
     * [Openapi tf example](https://github.com/rpstreef/openapi-tf-example/blob/master/services/api/example.yml)
     * [aws api-gateway sample](https://github.com/aws-samples/api-gateway-secure-pet-store/blob/master/src/main/resources/swagger.yaml)
+
+
 
 # Overview
 A holiday agency would like to suggest the lowest travel cost for holiday journeys to their customers.  
