@@ -140,11 +140,9 @@ resource "aws_iam_policy_attachment" "apigw-lambda-attach" {
   policy_arn = aws_iam_policy.apigw-lambda-policy.arn
 }
 
-
 # -----------------------------------------------------------------------
 # Cloudwatch resourses
 # -----------------------------------------------------------------------
-
 resource "aws_api_gateway_account" "api_gateway_account" {
   cloudwatch_role_arn = aws_iam_role.iam-for-lambda.arn
 }
