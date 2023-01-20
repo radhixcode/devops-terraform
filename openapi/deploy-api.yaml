@@ -7,148 +7,12 @@ info:
     email: tco@keyholding.com
 servers:
   - url: 'https://travel.keyholding.com/challenge-api/'
-paths:
-  /airport:
-    get:
-      description: List Airports
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Airport'
-        '400':
-          $ref: '#/components/responses/400'
-        '401':
-          $ref: '#/components/responses/401'
-        '403':
-          $ref: '#/components/responses/403'
-      x-amazon-apigateway-integration:
-        credentials: '${iam_role_arn}'
-        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
-        passthroughBehavior: when_no_match
-        httpMethod: GET
-        type: aws_proxy
-  '/airport/{id}':
-    get:
-      description: Get a single Airport
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Airport'
-        '400':
-          $ref: '#/components/responses/400'
-        '401':
-          $ref: '#/components/responses/401'
-        '403':
-          $ref: '#/components/responses/403'
-      x-amazon-apigateway-integration:
-        credentials: '${iam_role_arn}'
-        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
-        passthroughBehavior: when_no_match
-        httpMethod: GET
-        type: aws_proxy
-  '/airport/{id}/to/{toId}':
-    get:
-      description: 'Get a journey: an ordered list of airport IDs'
-      parameters:
-        - in: path
-          name: toId
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Journey'
-        '400':
-          $ref: '#/components/responses/400'
-        '401':
-          $ref: '#/components/responses/401'
-        '403':
-          $ref: '#/components/responses/403'
-      x-amazon-apigateway-integration:
-        credentials: '${iam_role_arn}'
-        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
-        passthroughBehavior: when_no_match
-        httpMethod: GET
-        type: aws_proxy
-  '/vehicle/{people}/{distance}':
-    get:
-      description: Get vehicle with cheap cost
-      parameters:
-        - in: path
-          name: people
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: distance
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Vehicle'
-        '400':
-          $ref: '#/components/responses/400'
-        '401':
-          $ref: '#/components/responses/401'
-        '403':
-          $ref: '#/components/responses/403'
-      x-amazon-apigateway-integration:
-        credentials: '${iam_role_arn}'
-        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
-        passthroughBehavior: when_no_match
-        httpMethod: GET
-        type: aws_proxy
-    options:
-      responses:
-        '200':
-          $ref: '#/components/responses/cors'
-        '400':
-          $ref: '#/components/responses/cors'
-        '500':
-          $ref: '#/components/responses/cors'
-      x-amazon-apigateway-integration:
-        responses:
-          default:
-            statusCode: '200'
-            responseParameters:
-              method.response.header.Access-Control-Max-Age: '''7200'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,HEAD,GET,POST,PUT,PATCH,DELETE'''
-              method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
-              method.response.header.Access-Control-Allow-Origin: '''*'''
-        passthroughBehavior: when_no_match
-        timeoutInMillis: 29000
-        requestTemplates:
-          application/json: '{ "statusCode": 200 }'
-        type: mock
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      name: x-api-key
+      in: header
   responses:
     '400':
       description: Bad request
@@ -254,3 +118,234 @@ components:
           type: number
         distance:
           type: number
+paths:
+  /airport:
+    get:
+      description: List Airports
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Airport'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        timeoutInMillis: '${lambda_identity_timeout}'
+        type: aws_proxy
+        contentHandling: CONVERT_TO_TEXT
+      x-amazon-apigateway-auth:
+        type: NONE
+      x-amazon-apigateway-api-key-source: HEADER
+    options:
+      responses:
+        '200':
+          $ref: '#/components/responses/cors'
+        '400':
+          $ref: '#/components/responses/cors'
+        '500':
+          $ref: '#/components/responses/cors'
+      x-amazon-apigateway-integration:
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Max-Age: '''7200'''
+              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,HEAD,GET,POST,PUT,PATCH,DELETE'''
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+              method.response.header.Access-Control-Allow-Origin: '''*'''
+        passthroughBehavior: when_no_match
+        timeoutInMillis: 29000
+        requestTemplates:
+          application/json: '{ "statusCode": 200 }'
+        type: mock
+  '/airport/{id}':
+    get:
+      description: Get a single Airport
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Airport'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        timeoutInMillis: '${lambda_identity_timeout}'
+        type: aws_proxy
+        contentHandling: CONVERT_TO_TEXT
+      x-amazon-apigateway-auth:
+        type: NONE
+      x-amazon-apigateway-api-key-source: HEADER
+    options:
+      responses:
+        '200':
+          $ref: '#/components/responses/cors'
+        '400':
+          $ref: '#/components/responses/cors'
+        '500':
+          $ref: '#/components/responses/cors'
+      x-amazon-apigateway-integration:
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Max-Age: '''7200'''
+              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,HEAD,GET,POST,PUT,PATCH,DELETE'''
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+              method.response.header.Access-Control-Allow-Origin: '''*'''
+        passthroughBehavior: when_no_match
+        timeoutInMillis: 29000
+        requestTemplates:
+          application/json: '{ "statusCode": 200 }'
+        type: mock
+  '/airport/{id}/to/{toId}':
+    get:
+      description: 'Get a journey: an ordered list of airport IDs'
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: toId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journey'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        timeoutInMillis: '${lambda_identity_timeout}'
+        type: aws_proxy
+        contentHandling: CONVERT_TO_TEXT
+      x-amazon-apigateway-auth:
+        type: NONE
+      x-amazon-apigateway-api-key-source: HEADER
+    options:
+      responses:
+        '200':
+          $ref: '#/components/responses/cors'
+        '400':
+          $ref: '#/components/responses/cors'
+        '500':
+          $ref: '#/components/responses/cors'
+      x-amazon-apigateway-integration:
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Max-Age: '''7200'''
+              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,HEAD,GET,POST,PUT,PATCH,DELETE'''
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+              method.response.header.Access-Control-Allow-Origin: '''*'''
+        passthroughBehavior: when_no_match
+        timeoutInMillis: 29000
+        requestTemplates:
+          application/json: '{ "statusCode": 200 }'
+        type: mock
+  '/vehicle/{people}/{distance}':
+    get:
+      description: Get vehicle with cheap cost
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: people
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: distance
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+      x-amazon-apigateway-integration:
+        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations'
+        passthroughBehavior: when_no_match
+        httpMethod: GET
+        timeoutInMillis: '${lambda_identity_timeout}'
+        type: aws_proxy
+        contentHandling: CONVERT_TO_TEXT
+      x-amazon-apigateway-auth:
+        type: NONE
+      x-amazon-apigateway-api-key-source: HEADER
+    options:
+      responses:
+        '200':
+          $ref: '#/components/responses/cors'
+        '400':
+          $ref: '#/components/responses/cors'
+        '500':
+          $ref: '#/components/responses/cors'
+      x-amazon-apigateway-integration:
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Max-Age: '''7200'''
+              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,HEAD,GET,POST,PUT,PATCH,DELETE'''
+              method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+              method.response.header.Access-Control-Allow-Origin: '''*'''
+        passthroughBehavior: when_no_match
+        timeoutInMillis: 29000
+        requestTemplates:
+          application/json: '{ "statusCode": 200 }'
+        type: mock

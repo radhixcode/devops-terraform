@@ -31,6 +31,39 @@ data "archive_file" "lambda-zip" {
   ]
 }
 
+resource "aws_api_gateway_api_key" "holiday-key" {
+  name = "holidaykey"
+}
+# -----------------------------------------------------------------------
+# API key for auth header
+# -----------------------------------------------------------------------
+resource "aws_api_gateway_usage_plan_key" "devUsageKey" {
+  key_id        = aws_api_gateway_api_key.holiday-key.id
+  key_type      = "API_KEY"
+  usage_plan_id = aws_api_gateway_usage_plan.DevUsagePlan.id
+}
+
+resource "aws_api_gateway_usage_plan" "DevUsagePlan" {
+  name         = "dev-usage-plan"
+  description  = "dev usage plan for say hello"
+  product_code = "holiday-key"
+
+  api_stages {
+    api_id = aws_api_gateway_rest_api.holiday-api.id
+    stage  = aws_api_gateway_stage.holiday-stage.stage_name
+  }
+
+  quota_settings {
+    limit  = 1000
+    offset = 0
+    period = "DAY"
+  }
+
+  throttle_settings {
+    burst_limit = 20
+    rate_limit  = 100
+  }
+}
 # -----------------------------------------------------------------------
 # Provides an IAM role for Lambda
 # -----------------------------------------------------------------------
@@ -85,23 +118,6 @@ resource "aws_iam_policy" "dynamodb-lambda-policy" {
   })
 }
 
-resource "aws_iam_policy" "apigw-lambda-policy" {
-  name = "apigw-lambda-policy"
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "lambda:InvokeFunction"
-        ]
-        Resource = [
-          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"
-        ]
-      }
-    ]
-  })
-}
 resource "aws_iam_role_policy" "apigw-cloudwatch-policy" {
   name = "apigw-cloudwatch-policy"
   role = aws_iam_role.iam-for-lambda.id
@@ -134,24 +150,16 @@ resource "aws_iam_policy_attachment" "dynamodb-lambda-attach" {
   policy_arn = aws_iam_policy.dynamodb-lambda-policy.arn
 }
 
-resource "aws_iam_policy_attachment" "apigw-lambda-attach" {
-  name       = "apigw-lambda-attachment"
-  roles      = [aws_iam_role.iam-for-lambda.name]
-  policy_arn = aws_iam_policy.apigw-lambda-policy.arn
-}
-
-
 # -----------------------------------------------------------------------
 # Cloudwatch resourses
 # -----------------------------------------------------------------------
-
 resource "aws_api_gateway_account" "api_gateway_account" {
   cloudwatch_role_arn = aws_iam_role.iam-for-lambda.arn
 }
 
 resource "aws_cloudwatch_log_group" "api-gw-logs" {
   name              = "api-gw-logs_${aws_api_gateway_rest_api.holiday-api.id}/holiday-stage"
-  retention_in_days = 3
+  retention_in_days = 1
 }
 
 # -----------------------------------------------------------------------
@@ -203,28 +211,24 @@ resource "aws_lambda_function" "lambda" {
   ]
 }
 
-resource "aws_lambda_function_url" "lambda" {
-  function_name      = aws_lambda_function.lambda.function_name
-  authorization_type = "NONE"
-
-}
-
 # -----------------------------------------------------------------------
 # OpenAPI API gateway management
 # -----------------------------------------------------------------------
 data "template_file" "open-api-specification" {
   template = file("../openapi/deploy-api.yaml")
   vars = {
-    region       = "us-east-1"
-    lambda_arn   = aws_lambda_function.lambda.arn
-    iam_role_arn = aws_iam_role.iam-for-lambda.arn
+    region                  = "us-east-1"
+    lambda_arn              = aws_lambda_function.lambda.arn
+    iam_role_arn            = aws_iam_role.iam-for-lambda.arn
+    lambda_identity_timeout = var.lambda_identity_timeout
   }
 }
 
 resource "aws_api_gateway_rest_api" "holiday-api" {
-  name        = "holiday-api"
-  description = "Proxy to handle requests to our API"
-  body        = data.template_file.open-api-specification.rendered
+  name           = "holiday-api"
+  description    = "Proxy to handle requests to our API"
+  api_key_source = "HEADER"
+  body           = data.template_file.open-api-specification.rendered
   depends_on = [
     aws_lambda_function.lambda
   ]
@@ -268,11 +272,15 @@ resource "aws_api_gateway_method_settings" "all" {
   }
 }
 
-resource "aws_api_gateway_authorizer" "holiday-lambda-auth" {
-  name                   = "holiday-lambda-auth"
-  rest_api_id            = aws_api_gateway_rest_api.holiday-api.id
-  authorizer_uri         = aws_lambda_function.lambda.invoke_arn
-  authorizer_credentials = aws_iam_role.iam-for-lambda.arn
+# -----------------------------------------------------------------------
+# Lambda permission API gateway 
+# -----------------------------------------------------------------------
+resource "aws_lambda_permission" "api-gateway-invoke-lambda" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.holiday-api.execution_arn}/*/*"
 }
 
 # -----------------------------------------------------------------------
@@ -281,34 +289,3 @@ resource "aws_api_gateway_authorizer" "holiday-lambda-auth" {
 output "base_url" {
   value = aws_api_gateway_deployment.holiday-deploy.invoke_url
 }
-
-output "lamda_function_url" {
-  value = aws_lambda_function_url.lambda.function_url
-}
-
-
-
-
-# resource "aws_lambda_permission" "vehicle_get_trigger" {
-#   statement_id = "AllowAPIGatewayInvokeGETVehicle"
-#   action       = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/vehicle/*/*"
-# }
-
-# resource "aws_lambda_permission" "airport_get_trigger" {
-#   statement_id = "AllowAPIGatewayInvokeGETAirport"
-#   action       = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/airport"
-# }
-
-# resource "aws_lambda_permission" "to_airport_get_trigger" {
-#   statement_id = "AllowAPIGatewayInvokeGETToAirport"
-#   action       = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn = "arn:aws:execute-api:${data.aws_arn.api_gw_deployment_arn.region}:${data.aws_arn.api_gw_deployment_arn.account}:${aws_api_gateway_deployment.holiday-deploy.rest_api_id}/*/GET/airport/*/to/*"
-# }

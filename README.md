@@ -1,22 +1,18 @@
-<div align="center"><img src="./logo.svg" alt="Logo" width="80" height="80"></div>
-
-<h1 align="center">Holiday Agency</h1>
-
 # Setup
 ### Run on local machine
 * Install pip3 and install needed dependency packages 
 ```
 pip3 install botocore boto3 dijkstar
 ```
-* Install docker and run docker command to install dynamoDB locally
+* Install docker and run docker command to install dynamoDB locally then run the container before running the bash script.
 ```
 docker run -p 8000:8000 amazon/dynamodb-local  
 ```
-* Run bash script `create-local-db.sh` to create the dynamo DB tables `airport` and `vehicle` and populate them
+* Run bash script `create-local-db.sh` to create the dynamoDB tables `airport` and `vehicle` and populate them
 ```
 ./create-local-db.sh
 ```
-* Check dynamo DB tables
+* Check dynamoDB tables
 ```
 aws dynamodb list-tables --endpoint-url http://localhost:8000
 aws dynamodb describe-table --table-name airport --endpoint-url http://localhost:8000
@@ -32,7 +28,7 @@ aws dynamodb describe-table --table-name airport --endpoint-url http://localhost
     * [http://localhost:8080/vehicle/2/100](http://localhost:8080/vehicle/2/100)
 
 ### Terraform with AWS
-* Install Speccy for combining OpenAPI specifications (Inside `openapi` folder)
+* Install openapi-merger for combining OpenAPI specifications (Inside `openapi` folder)
 ```
 npm install openapi-merger -g 
 openapi-merger -i main.yaml -o deploy-api.yaml
@@ -42,7 +38,7 @@ openapi-merger -i main.yaml -o deploy-api.yaml
 brew tap hashicorp/tap
 brew install hashicorp/tap/terraform
 ```
-* Terraform commands
+* Terraform commands. Run inside `terraform` folder
 ```
 terraform init (initializes the current directory)
 terraform init -upgrade (upgrade to latest acceptable provider version)
@@ -56,8 +52,7 @@ terraform graph (creates a DOT-formatted graph)
 terraform destroy --target aws_lambda_function.lambda (destroys indivifual resource)
 terraform destroy  (destroys what has been built by Terraform)
 ```
-### Notes
-* Populate AWS DynamoDB
+* Populate AWS DynamoDB after `terraform apply`
 ```
 ./update-db.sh
 ```
@@ -78,6 +73,44 @@ terraform destroy  (destroys what has been built by Terraform)
   "isBase64Encoded": "FALSE"
 }
 ```
+
+### Github actions
+* .github/workflow/terraform.yaml is the workflow file
+* Create new IAM user for github actions and get the credentials.
+* Add new New repository secrets  (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `BUCKET_TF_STATE`) in Actions secrets of the Github repository.
+
+### Current Shortcomings
+* **Github actions:** Can do terraform apply locally for the AWS but github action terrafom apply didn't trigger on merge/push to the main branch.
+* **API gateway:** Manual steps involved.<br />
+AWS Labmda is working (tested with above sample JSON). But to test API gateway Method execution, Integration Request function name needed to be manually updated for each GET.
+
+![Img 1](https://i.imgur.com/CxsMIZw.png)
+![Img 2](https://i.imgur.com/oArVAxI.png)
+
+Execute the 'Deploy API' button for the root resource ('/') from the AWS API gateway console.
+
+![Img 3](https://i.imgur.com/vs1JcJV.png)
+
+* **Public URL:** The public URL throws `Internal server error` or `Endpoint request timed out` for some time and then it works (Need `x-api-key` which we can get this from Amazon API gateway -> API keys)
+```
+curl --location --request GET 'https://8v5w5mv4ze.execute-api.us-east-1.amazonaws.com/holiday-stage/vehicle/2/100' \
+--header 'Content-Type: application/json' \
+--header 'x-api-key: <x-api-key here>'
+```
+![Img 3](https://i.imgur.com/kNcLopl.png)
+
+### Reference
+* Github actions
+    * [Managing Terraform with GitHub Actions](https://spacelift.io/blog/github-actions-terraform)
+    * [How to use GitHub Actions to automate Terraform](https://acloudguru.com/blog/engineering/how-to-use-github-actions-to-automate-terraform)
+* Terraform
+    * [Openapi tf example](https://github.com/rpstreef/openapi-tf-example/blob/master/services/api/example.yml)
+    * [aws api-gateway sample](https://github.com/aws-samples/api-gateway-secure-pet-store/blob/master/src/main/resources/swagger.yaml)
+    * [cliffdias/HelloworldAPI](https://github.com/cliffdias/HelloworldAPI)
+
+
+<div align="center"><img src="./logo.jpg" alt="Logo" width="80" height="80"></div>
+<h1 align="center" style="color:tomato;">Holiday Agency</h1>
 
 # Overview
 A holiday agency would like to suggest the lowest travel cost for holiday journeys to their customers.  
@@ -118,3 +151,9 @@ This flight agency keeps a table with its airports and their connections:
 While the route `A->B` can exist, it doesn't necessarily mean that `B->A` exists. Additionally, the mileage may be different for each direction.
 
 As a side-note, some of the mileages might not be at all accurate but imagine that someone make some fairly large one-way portals in the sky that can shorten the distance between two airports.
+
+The current logic allows for the following endpoints:
+* `GET`: `/airports` - returns a list of airports
+* `GET`: `/airports/{airportId}` - return details of a single airport
+* `GET`: `/airports/{airportId}/to/{airportToId}` - returns the cheapest quote for a journey from `airportId` to `airportToId`
+* `GET`: `/vehicle/{numberOfPeople}/{distance}` - returns the cheapest vehicle to use (and the cost) for the given `numberOfPeople` and `distance` in miles

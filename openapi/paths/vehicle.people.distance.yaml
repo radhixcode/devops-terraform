@@ -1,5 +1,7 @@
 get:
   description: "Get vehicle with cheap cost"
+  security:
+    - ApiKeyAuth: []
   parameters:
     - in: path
       name: people
@@ -25,11 +27,15 @@ get:
           schema:
             $ref: "../schemas/vehicle.yaml#/Vehicle"
   x-amazon-apigateway-integration:
-    credentials: ${iam_role_arn}
     uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations"
     passthroughBehavior: "when_no_match"
     httpMethod: "GET"
+    timeoutInMillis: ${lambda_identity_timeout}
     type: "aws_proxy"
+    contentHandling: "CONVERT_TO_TEXT"
+  x-amazon-apigateway-auth:
+    type: "NONE"
+  x-amazon-apigateway-api-key-source: "HEADER"
 options:
   responses:
     200:
@@ -44,11 +50,7 @@ options:
         statusCode: "200"
         responseParameters:
           method.response.header.Access-Control-Max-Age: "'7200'"
-<<<<<<< Updated upstream
-          method.response.header.Access-Control-Allow-Methods: "'GET'"
-=======
           method.response.header.Access-Control-Allow-Methods: "'OPTIONS,HEAD,GET,POST,PUT,PATCH,DELETE'"
->>>>>>> Stashed changes
           method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
           method.response.header.Access-Control-Allow-Origin: "'*'"
     passthroughBehavior: "when_no_match"
